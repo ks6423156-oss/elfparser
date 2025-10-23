@@ -13,20 +13,22 @@ void main() {
     int fd_in = 0, fd_out = 0;
     size_t shstrndx = 0, n = 0;
 
-    // Necessary to call other libelf library functions
-    elf_version(EV_CURRENT);
+elf_version(EV_CURRENT);
 
-    // Open main
-    fd_in = open("main", O_RDONLY, 0);
-
-    // Convert the file descriptor to an ELF handle
-    elf = elf_begin(fd_in, ELF_C_READ, NULL);
-
-    // Retrieve the index of the section name string table
-    elf_getshdrstrndx(elf, &shstrndx);
-
-    // Iterate through the sections
-    while ((scn = elf_nextscn(elf, scn)) != NULL) {
+fd_in = open("main", O_RDONLY, 0);
+    
+elf = elf_begin(fd_in, ELF_C_READ, NULL);
+//calling 64bit elf section header 
+Elf64_Ehdr *ehdr = elf64_getehdr(elf);
+if (ehdr->e_shstrndx == SHN_XINDEX) {
+    Elf_Scn *scn0 = elf_getscn(elf, 0);
+    GElf_Shdr shdr0;
+    gelf_getshdr(scn0, &shdr0);
+    shstrndx = shdr0.sh_link;
+} else {
+    shstrndx = ehdr->e_shstrndx;
+}
+while ((scn = elf_nextscn(elf, scn)) != NULL) {
         // Retrieve the section header
         shdr = elf64_getshdr(scn);
 
